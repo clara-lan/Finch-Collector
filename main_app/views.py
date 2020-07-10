@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from .models import Finch
+from .models import Finch, Toy
 # Create your views here.
 from django.views.generic import ListView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
@@ -19,7 +19,14 @@ def finches_index(request):
 
 def finches_detail(request, finch_id):
   finch = Finch.objects.get(id=finch_id)
-  return render(request, 'finches/detail.html', { 'finch': finch })
+    # Get the toys the cat doesn't have
+  toys_finch_doesnt_have = Toy.objects.exclude(id__in = finch.toys.all().values_list('id'))
+  feeding_form = FeedingForm()
+  return render(request, 'finches/detail.html', { 
+    'finch': finch,
+    'feeding_form':feeding_form,
+    'toys':toys_finch_doesnt_have
+  })
 
 # use class(instead of def) to create CBV(class-based-view)
 # see changes at urls.py line10
@@ -42,14 +49,6 @@ class FinchDelete(DeleteView):
   model = Finch
   success_url = '/finches/'
 
-def finches_detail(request, finch_id):
-  finch = Finch.objects.get(id=finch_id)
-  # instantiate FeedingForm to be rendered in the template
-  feeding_form = FeedingForm()
-  return render(request, 'finches/detail.html', {
-    # include the cat and feeding_form in the context
-    'finch': finch, 'feeding_form': feeding_form
-  })
 
 def add_feeding(request, finch_id):
   form = FeedingForm(request.POST)
@@ -60,4 +59,9 @@ def add_feeding(request, finch_id):
     new_feeding = form.save(commit=False)
     new_feeding.finch_id = finch_id
     new_feeding.save()
+  return redirect('detail', finch_id=finch_id)
+
+def assoc_toy(request, finch_id, toy_id):
+  # Note that you can pass a toy's id instead of the whole object
+  Finch.objects.get(id=finch_id).toys.add(toy_id)
   return redirect('detail', finch_id=finch_id)

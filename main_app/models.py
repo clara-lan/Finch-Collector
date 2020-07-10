@@ -1,10 +1,20 @@
 from django.db import models
+from datetime import date
 from django.urls import reverse
+# Import the User
+from django.contrib.auth.models import User
+
 MEALS = (
     ('B', 'Breakfast'),
     ('L', 'Lunch'),
     ('D', 'Dinner')
 )
+
+class Toy(models.Model):
+  name = models.CharField(max_length=50)
+  color = models.CharField(max_length=20)
+  def __str__(self):
+    return self.name
 
 # Create your models here.
 class Finch(models.Model):
@@ -13,7 +23,9 @@ class Finch(models.Model):
   description = models.TextField(max_length=250)
   age = models.IntegerField()
   # Foreignkey for the M:M relationship
-  toys = models.ManyToManyField('Toy')
+  toys = models.ManyToManyField(Toy)
+  # Add the foreign key linking to a user instance
+  user = models.ForeignKey(User, on_delete=models.CASCADE)
 
   def __str__(self):
     return self.name
@@ -22,11 +34,7 @@ class Finch(models.Model):
   def get_absolute_url(self):
     return reverse('detail', kwargs={'finch_id': self.id})
 
-class Toy(models.Model):
-  name = models.CharField(max_length=50)
-  color = models.CharField(max_length=20)
-  def __str__(self):
-    return self.name
+
 
 class Feeding(models.Model):
   date = models.DateField('feeding date')
@@ -49,3 +57,4 @@ class Feeding(models.Model):
     # sort feeding by date, latest date would be the first
   class Meta:
     ordering = ['-date']
+
